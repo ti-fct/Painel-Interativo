@@ -62,8 +62,8 @@ class FullScreenApp(QMainWindow):
         
         # Conectar botões
         self.btn_home.clicked.connect(lambda: self.carregar_url("https://fct.ufg.br"))
-        self.btn_horarios.clicked.connect(lambda: self.carregar_url("https://www.g1.com.br/"))
-        self.btn_fct_numeros.clicked.connect(lambda: self.carregar_url("https://www.uol.com.br"))
+        self.btn_horarios.clicked.connect(lambda: self.carregar_url("https://ti-fct.github.io/horariosFCT/"))
+        self.btn_fct_numeros.clicked.connect(lambda: self.carregar_url("https://app.powerbi.com/view?r=eyJrIjoiNjUzMDMzOWUtNzViNS00NGYyLTk1YTYtMWY5MWE5OGI1YzAzIiwidCI6ImIxY2E3YTgxLWFiZjgtNDJlNS05OGM2LWYyZjJhOTMwYmEzNiJ9"))
         
         # Carregar página inicial
         self.carregar_url("https://ufg.br")
