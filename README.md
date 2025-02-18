@@ -1,3 +1,3 @@
 # Dependencias
 
-pip install pyqt5 pyqtwebengine
+pip install pyqt6 pyqtwebengine
