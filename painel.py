@@ -143,27 +143,27 @@ class FullScreenApp(QMainWindow):
         if event.matches(QKeySequence.StandardKey.Close):
             event.ignore()
 
-    # def mouseMoveEvent(self, event):
-    #     print("Mouse moved")  # Depuração
-    #     self.lastActivity = QDateTime.currentDateTime()
-    #     if self.overlay.isVisible():
+     def mouseMoveEvent(self, event):
+         print("Mouse moved")  # Depuração
+         self.lastActivity = QDateTime.currentDateTime()
+         if self.overlay.isVisible():
     #         print("Hiding hexagon")  # Depuração
-    #         self.overlay.hide()
-    #     super().mouseMoveEvent(event)
+             self.overlay.hide()
+         super().mouseMoveEvent(event)
 
-    # def updateOverlayVisibility(self):
-    #     agora = QDateTime.currentDateTime()
-    #     idle_time = self.lastActivity.secsTo(agora)
+     def updateOverlayVisibility(self):
+         agora = QDateTime.currentDateTime()
+         idle_time = self.lastActivity.secsTo(agora)
     #     print(f"Idle time: {idle_time} seconds")  # Depuração
 
-    #     if idle_time >= 300:  # 5 minutos
-    #         if not self.overlay.isVisible():
+         if idle_time >= 300:  # 5 minutos
+             if not self.overlay.isVisible():
     #             print("Showing hexagon")  # Depuração
-    #             self.overlay.show()
-    #     else:
-    #         if self.overlay.isVisible():
+                 self.overlay.show()
+         else:
+             if self.overlay.isVisible():
     #             print("Hiding hexagon")  # Depuração
-    #             self.overlay.hide()
+                 self.overlay.hide()
 
 
 if __name__ == "__main__":
