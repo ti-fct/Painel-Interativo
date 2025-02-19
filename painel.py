@@ -144,7 +144,7 @@ class FullScreenApp(QMainWindow):
             event.ignore()
 
      def mouseMoveEvent(self, event):
-         print("Mouse moved")  # Depuração
+    #     print("Mouse moved")  # Depuração
          self.lastActivity = QDateTime.currentDateTime()
          if self.overlay.isVisible():
     #         print("Hiding hexagon")  # Depuração
