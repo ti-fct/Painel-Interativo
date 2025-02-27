@@ -16,12 +16,12 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 # Constantes para o feed de notícias
 FEED_URL = "https://fct.ufg.br/feed"
 TITLE_LIMIT = 80
-DESC_LIMIT = 600
+DESC_LIMIT = 400
 UPDATE_INTERVAL = 3600  # 1 hora em segundos
 
 # Constantes para dimensões de imagem
-IMAGE_WIDTH = 600
-IMAGE_HEIGHT = 700
+IMAGE_WIDTH = 500
+IMAGE_HEIGHT = 600
 
 # -------------------------------------------------------------
 # COMPONENTES DE DOWNLOAD DE NOTÍCIAS E IMAGENS
@@ -440,6 +440,7 @@ class FullScreenApp(QMainWindow):
     def carregar_url(self, url: str):
         self.webview.load(QUrl(url))
         self.show_web()
+        self.showFullScreen()
     
     def eventFilter(self, source, event):
         if event.type() in (QEvent.Type.MouseMove, QEvent.Type.KeyPress, QEvent.Type.MouseButtonPress):

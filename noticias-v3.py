@@ -16,12 +16,12 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 # Constantes para o feed de notícias
 FEED_URL = "https://fct.ufg.br/feed"
 TITLE_LIMIT = 80
-DESC_LIMIT = 600
+DESC_LIMIT = 500
 UPDATE_INTERVAL = 3600  # 1 hora em segundos
 
 # Constantes para dimensões de imagem
-IMAGE_WIDTH = 600
-IMAGE_HEIGHT = 700
+IMAGE_WIDTH = 700
+IMAGE_HEIGHT = 800
 
 # -------------------------------------------------------------
 # COMPONENTES DE DOWNLOAD DE NOTÍCIAS E IMAGENS
@@ -127,8 +127,8 @@ class NewsCarousel(QWidget):
         self.layout = QVBoxLayout(self)
         self.setStyleSheet("""
             QWidget { background-color: #ffffff; }
-            QLabel#title { font-size: 26px; font-weight: bold; color: #1a237e; }
-            QLabel#desc { font-size: 24px; color: #333; }
+            QLabel#title { font-size: 30px; font-weight: bold; color: #1a237e; }
+            QLabel#desc { font-size: 28px; color: #333; }
         """)
         
         self.news_container = QWidget()
