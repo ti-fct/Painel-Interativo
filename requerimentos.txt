@@ -1,0 +1,1 @@
+pip install pyqt6 pyqt6-webengine beautifulsoup4 qrcode feedparser pillow requests
