@@ -179,3 +179,7 @@ python painel.py
 ### Problema: Carrossel não avança automaticamente
 - Verifique se o feed está sendo carregado corretamente
 - Verifique os logs para erros de processamento do feed
+
+## Licenciamento
+Este projeto está licenciado sob [GPL v3](LICENSE.md). O uso do PyQt6/Qt6 
+está sujeito aos termos da [licença GPL](https://www.gnu.org/licenses/gpl-3.0.html).
