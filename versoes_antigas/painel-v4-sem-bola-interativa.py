@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # PAINEL INTERATIVO FCT
-# VERSÃO: 4.1 - Atualizado com animação
+# VERSÃO: 4
 # ATENÇÃO: PARA USAR COMO PAINEL INTERATIVO HABILITAR A OPÇÃO MENU_INICIAL_VISIVEL PARA FALSE
 # -------------------------------------------------------------
 
@@ -12,22 +12,21 @@ import time
 
 from io import BytesIO
 from bs4 import BeautifulSoup
-from PyQt6.QtCore import (QUrl, QTimer, Qt, QThread, pyqtSignal, QEvent, QRectF)
-from PyQt6.QtGui import (QGuiApplication, QPainter, QColor, QPixmap, QImage, QFont, QTextOption)
+from PyQt6.QtCore import (QUrl, QTimer, Qt, QThread, pyqtSignal, QPropertyAnimation, QEvent)
+from PyQt6.QtGui import (QGuiApplication, QPainter, QColor, QPixmap, QImage)
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QLabel, QSizePolicy, QStackedWidget)
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineSettings
 
 # Configurações da aplicação
-MENU_INICIAL_VISIVEL = True
-ANIMACAO_BOLINHA_ATIVA = False 
+MENU_INICIAL_VISIVEL = False
 URL_FEED = "https://fct.ufg.br/feed"
 LIMITE_TITULO = 90
 LIMITE_DESCRICAO = 400
 INTERVALO_ATUALIZACAO = 3600  # 1 hora em segundos
-LARGURA_IMAGEM = 500
-ALTURA_IMAGEM = 600
+LARGURA_IMAGEM = 650
+ALTURA_IMAGEM = 750
 
 # -------------------------------------------------------------
 # COMPONENTE DE DOWNLOAD DE NOTÍCIAS
@@ -70,18 +69,18 @@ class BaixadorNoticias(QThread):
                 if len(descricao) > LIMITE_DESCRICAO:
                     ultimo_espaco = descricao.rfind(' ', 0, LIMITE_DESCRICAO)
                     if ultimo_espaco > 0:
-                        descricao = descricao[:ultimo_espaco] + '... - '
+                        descricao = descricao[:ultimo_espaco] + '...'
                     else:
-                        descricao = descricao[:LIMITE_DESCRICAO] + '... - '
+                        descricao = descricao[:LIMITE_DESCRICAO] + '...'
                 
                 # Capturar data da notícia (se disponível)
                 data = entrada.get('published', 'Data não disponível')
                 # Opcional: formatar a data se necessário, por exemplo:
-                try:
-                    data_parsed = time.strptime(data, "%a, %d %b %Y %H:%M:%S %z")
-                    data = time.strftime("%d/%m/%Y - %H:%M", data_parsed)
-                except Exception:
-                    pass
+                # try:
+                #     data_parsed = time.strptime(data, "%a, %d %b %Y %H:%M:%S %Z")
+                #     data = time.strftime("%d/%m/%Y", data_parsed)
+                # except Exception:
+                #     pass
                 
                 entrada_processada = {
                     'titulo': titulo,
@@ -115,7 +114,7 @@ def criar_qr_code(url, tamanho=150):
         return QPixmap()
 
 # -------------------------------------------------------------
-# WIDGET PARA EXIBIÇÃO DE NOTÍCIAS (CARROSSEL)      
+# WIDGET PARA EXIBIÇÃO DE NOTÍCIAS (CARROSSEL)
 # -------------------------------------------------------------
 class CarrosselNoticias(QWidget):
     def __init__(self, parent=None):
@@ -124,6 +123,7 @@ class CarrosselNoticias(QWidget):
         self.indice_atual = 0
         
         self.layout = QVBoxLayout(self)
+        # Atualização do estilo para melhor UX
         self.setStyleSheet("""
             QWidget { background-color: #ffffff; }
             QLabel#titulo { font-size: 28px; font-weight: bold; color: #0072b9; margin-bottom: 5px; }
@@ -131,14 +131,17 @@ class CarrosselNoticias(QWidget):
             QLabel#descricao { font-size: 26px; color: #333; margin-bottom: 10px; }
         """)
         
+        # Layout principal com imagem e texto
         self.conteiner_noticias = QWidget()
         self.layout_noticias = QHBoxLayout(self.conteiner_noticias)
         
+        # Imagem
         self.rotulo_imagem = QLabel("Carregando imagem...")
         self.rotulo_imagem.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.rotulo_imagem.setFixedSize(LARGURA_IMAGEM, ALTURA_IMAGEM)
         self.rotulo_imagem.setStyleSheet("background-color: #ffffff; border-radius: 10px; padding: 10px;")
         
+        # Textos e QR code
         self.conteiner_texto = QWidget()
         self.layout_texto = QVBoxLayout(self.conteiner_texto)
         
@@ -146,6 +149,7 @@ class CarrosselNoticias(QWidget):
         self.rotulo_titulo.setObjectName("titulo")
         self.rotulo_titulo.setWordWrap(True)
         
+        # Novo rótulo para a data
         self.rotulo_data = QLabel("")
         self.rotulo_data.setObjectName("data")
         self.rotulo_data.setWordWrap(True)
@@ -155,16 +159,20 @@ class CarrosselNoticias(QWidget):
         self.rotulo_descricao.setWordWrap(True)
         self.rotulo_descricao.setAlignment(Qt.AlignmentFlag.AlignJustify)
         
+        # Reorganizando o container do QR Code em layout horizontal
         self.conteiner_qr = QWidget()
         self.layout_qr = QHBoxLayout(self.conteiner_qr)
         self.layout_qr.setContentsMargins(0, 0, 0, 0)
         self.layout_qr.setSpacing(10)
+
         
         self.rotulo_qr = QLabel()
         self.rotulo_qr.setFixedSize(150, 150)
-        self.layout_qr.addStretch()
+        
+        self.layout_qr.addStretch()  # Empurra o QR code para a direita
         self.layout_qr.addWidget(self.rotulo_qr)
         
+        # Montagem do layout de texto com data
         self.layout_texto.addWidget(self.rotulo_titulo)
         self.layout_texto.addWidget(self.rotulo_data)
         self.layout_texto.addWidget(self.rotulo_descricao)
@@ -175,9 +183,11 @@ class CarrosselNoticias(QWidget):
         self.layout_noticias.addWidget(self.conteiner_texto, 2)
         self.layout.addWidget(self.conteiner_noticias)
         
+        # Timers para alternar as notícias
         self.timer_noticias = QTimer(self)
         self.timer_noticias.timeout.connect(self.proxima_noticia)
         
+        # Iniciar download de notícias
         self.baixador_noticias = BaixadorNoticias()
         self.baixador_noticias.noticias_prontas.connect(self.quando_noticias_prontas)
         self.baixador_noticias.start()
@@ -199,17 +209,20 @@ class CarrosselNoticias(QWidget):
         self.rotulo_titulo.setText(entrada['titulo'])
         self.rotulo_data.setText(entrada.get('data', ''))
         
+        # Texto da descrição
         texto_descricao = entrada['descricao']
-        if texto_descricao.endswith("... - "):
-            texto_descricao += "<i>leia a notícia completa no qrode abaixo</i>"
+        if texto_descricao.endswith("..."):
+            texto_descricao += " leia mais no QCode abaixo"
         self.rotulo_descricao.setText(texto_descricao)
         
+        # QR Code
         if entrada['link']:
             self.rotulo_qr.setPixmap(criar_qr_code(entrada['link']))
             self.conteiner_qr.setVisible(True)
         else:
             self.conteiner_qr.setVisible(False)
         
+        # Imagem
         if entrada['url_imagem']:
             self.baixar_imagem(entrada['url_imagem'])
         else:
@@ -223,12 +236,14 @@ class CarrosselNoticias(QWidget):
                 qimagem = QImage.fromData(resposta.content)
                 pixmap = QPixmap.fromImage(qimagem)
                 
+                # Escalar mantendo proporção
                 imagem_pixmap = pixmap.scaled(
                     LARGURA_IMAGEM, ALTURA_IMAGEM,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation
                 )
                 
+                # Centralizar na área disponível
                 fundo = QPixmap(LARGURA_IMAGEM, ALTURA_IMAGEM)
                 fundo.fill(QColor("#ffffff"))
                 painter = QPainter(fundo)
@@ -255,82 +270,6 @@ class CarrosselNoticias(QWidget):
         self.baixador_noticias.start()
 
 # -------------------------------------------------------------
-# WIDGET PARA A ANIMAÇÃO DA BOLINHA
-# -------------------------------------------------------------
-class BallAnimation(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.setFixedSize(200, 200)
-        self.dx = 3
-        self.dy = 3
-        # Timer para atualizar a posição (aprox. 50 FPS)
-        self.timer_move = QTimer(self)
-        self.timer_move.timeout.connect(self.update_position)
-        self.timer_move.start(5)
-        # Timer para alternar visibilidade: 1 minuto visível, 1 minuto oculto
-        self.toggle_timer = QTimer(self)
-        self.toggle_timer.timeout.connect(self.toggle_visibility)
-        self.toggle_timer.start(60000)  # 60.000 ms = 1 minuto
-        self.visible_state = True
-        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.show()
-    
-    def toggle_visibility(self):
-        if self.visible_state:
-            self.hide()
-            self.visible_state = False
-        else:
-            self.show()
-            self.visible_state = True
-    
-    def update_position(self):
-        if not self.isVisible():
-            return
-        parent_rect = self.parent().rect()
-        new_x = self.x() + self.dx
-        new_y = self.y() + self.dy
-        
-        # Inverte a direção ao atingir as bordas
-        if new_x <= 0 or new_x + self.width() >= parent_rect.width():
-            self.dx = -self.dx
-        if new_y <= 0 or new_y + self.height() >= parent_rect.height():
-            self.dy = -self.dy
-        
-        self.move(self.x() + self.dx, self.y() + self.dy)
-    
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
-        # Desenha o círculo azul
-        painter.setBrush(QColor("#0072b9"))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawEllipse(0, 0, self.width(), self.height())
-        
-        # Define a fonte maior
-        fonte = QFont()
-        fonte.setPointSize(16)  # Tamanho da fonte ajustável
-        painter.setFont(fonte)
-        
-        # Define a cor do texto
-        painter.setPen(QColor("white"))
-        
-        # Define o retângulo para o texto com margens
-        rect_texto = self.rect().adjusted(10, 10, -10, -10)  # Retorna um QRect
-
-             
-        # Converte QRect para QRectF
-        rect_texto_f = QRectF(rect_texto)
-        
-        # Configura a opção de texto para centralizar
-        opcao_texto = QTextOption()
-        opcao_texto.setWrapMode(QTextOption.WrapMode.WordWrap)  # Quebra de linha, se necessário
-        opcao_texto.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Centraliza horizontal e verticalmente
-
-        # Desenha o texto com quebra de linha
-        painter.drawText(rect_texto_f, "Olá! Utilize o mouse para interagir com o painel!", opcao_texto)
-
-# -------------------------------------------------------------
 # WIDGET PARA O MENU LATERAL
 # -------------------------------------------------------------
 class MenuLateral(QWidget):
@@ -347,6 +286,7 @@ class MenuLateral(QWidget):
         layout.setContentsMargins(5, 20, 5, 20)
         layout.setSpacing(10)
         
+        # Botões do menu
         self.botoes = {
             "inicio": QPushButton("🏠  Página Inicial"),
             "campus": QPushButton("🏛️  Conheça o Campus"),
@@ -357,6 +297,7 @@ class MenuLateral(QWidget):
             "extensao": QPushButton("🌱  Ações de Extensão")
         }
         
+        # Adicionar botões ao layout
         for btn in self.botoes.values():
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             layout.addWidget(btn)
@@ -386,6 +327,7 @@ class AplicacaoTelaCheia(QMainWindow):
         layout_cabecalho = QHBoxLayout(cabecalho)
         layout_cabecalho.setContentsMargins(10, 10, 10, 10)
         
+        # Botão hamburger
         self.btn_hamburger = QPushButton("☰")
         self.btn_hamburger.setFixedSize(40, 40)
         self.btn_hamburger.setStyleSheet("""
@@ -395,12 +337,14 @@ class AplicacaoTelaCheia(QMainWindow):
         self.btn_hamburger.clicked.connect(self.alternar_menu)
         layout_cabecalho.addWidget(self.btn_hamburger)
         
+        # Título centralizado
         rotulo_titulo = QLabel("Painel Interativo FCT/UFG")
         rotulo_titulo.setStyleSheet("color: white; font-size: 28px; font-weight: bold;")
         rotulo_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         rotulo_titulo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         layout_cabecalho.addWidget(rotulo_titulo)
         
+        # Espaçador para manter o título centralizado
         espaco_direito = QWidget()
         espaco_direito.setFixedSize(40, 40)
         layout_cabecalho.addWidget(espaco_direito)
@@ -412,6 +356,7 @@ class AplicacaoTelaCheia(QMainWindow):
         layout_conteudo.setContentsMargins(0, 0, 0, 0)
         layout_conteudo.setSpacing(0)
         
+        # Menu lateral
         self.menu_lateral = MenuLateral()
         if MENU_INICIAL_VISIVEL:
             self.menu_lateral.setMaximumWidth(220)
@@ -421,12 +366,15 @@ class AplicacaoTelaCheia(QMainWindow):
             self.menu_visivel = False
         layout_conteudo.addWidget(self.menu_lateral)
         
+        # Área de conteúdo usando QStackedWidget
         self.area_conteudo = QStackedWidget()
         self.area_conteudo.setStyleSheet("background-color: #f0f0f0;")
         
+        # Widgets da área de conteúdo
         self.carrossel_noticias = CarrosselNoticias()
         self.webview = QWebEngineView()
         self.webview.load(QUrl("about:blank"))
+        # Habilita o visualizador de PDF integrado
         settings = self.webview.settings()
         settings.setAttribute(QWebEngineSettings.WebAttribute.PdfViewerEnabled, True)
         settings.setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
@@ -438,6 +386,7 @@ class AplicacaoTelaCheia(QMainWindow):
         layout_conteudo.addWidget(self.area_conteudo)
         layout_principal.addLayout(layout_conteudo)
         
+        # Conexão dos botões do menu lateral
         self.menu_lateral.botoes["inicio"].clicked.connect(self.mostrar_noticias)
         self.menu_lateral.botoes["campus"].clicked.connect(
             lambda: self.carregar_url("https://prezi.com/view/MZjulFdzyMstq9zoDLVX/"))
@@ -452,28 +401,25 @@ class AplicacaoTelaCheia(QMainWindow):
         self.menu_lateral.botoes["extensao"].clicked.connect(
             lambda: self.carregar_url("https://app.powerbi.com/view?r=eyJrIjoiMDcyZWQ2NWMtZTVkMy00YzMyLTkyYjQtNzFmMjQ1MzVjZDcwIiwidCI6ImIxY2E3YTgxLWFiZjgtNDJlNS05OGM2LWYyZjJhOTMwYmEzNiJ9"))
         
+        # Timers
         self.timer_atualizacao_noticias = QTimer(self)
         self.timer_atualizacao_noticias.timeout.connect(self.atualizar_noticias)
         self.timer_atualizacao_noticias.start(INTERVALO_ATUALIZACAO * 1000)
         
+        # Timer de inatividade (1 minuto)
         self.timer_inatividade = QTimer(self)
         self.timer_inatividade.setInterval(60000)
         self.timer_inatividade.timeout.connect(self.voltar_para_home)
         self.timer_inatividade.start()
-        
-        # Instancia a animação da bolinha se estiver ativa
-        if ANIMACAO_BOLINHA_ATIVA:
-            self.ballAnimation = BallAnimation(self)
-            # Posiciona a bolinha num ponto inicial (ex.: canto superior esquerdo)
-            self.ballAnimation.move(10, 10)
-        else:
-            self.ballAnimation = None
-
+    
     def alternar_menu(self):
         valor_inicial = self.menu_lateral.maximumWidth()
         largura_alvo = 0 if self.menu_visivel else 220
-        self.animacao = self.menu_lateral.property("maximumWidth")
-        self.menu_lateral.setMaximumWidth(largura_alvo)
+        self.animacao = QPropertyAnimation(self.menu_lateral, b"maximumWidth")
+        self.animacao.setDuration(300)
+        self.animacao.setStartValue(valor_inicial)
+        self.animacao.setEndValue(largura_alvo)
+        self.animacao.start()
         self.menu_visivel = not self.menu_visivel
     
     def voltar_para_home(self):
@@ -492,10 +438,6 @@ class AplicacaoTelaCheia(QMainWindow):
     def eventFilter(self, fonte, evento):
         if evento.type() in (QEvent.Type.MouseMove, QEvent.Type.KeyPress, QEvent.Type.MouseButtonPress):
             self.timer_inatividade.start()
-            # Ao detectar movimento do mouse, se a bolinha estiver visível, ela some
-            if self.ballAnimation and self.ballAnimation.isVisible():
-                self.ballAnimation.hide()
-                self.ballAnimation.visible_state = False
         return super().eventFilter(fonte, evento)
 
 if __name__ == "__main__":
