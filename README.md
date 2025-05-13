@@ -21,27 +21,43 @@ Um painel interativo desenvolvido para a Faculdade de Ciência e Tecnologia (FCT
 - PyQt6
 - QtWebEngine
 - Bibliotecas Python:
-  - requests
+  - pyqt6
+  - pyqt6-webengine
+  - beautifulsoup4
   - qrcode
   - feedparser
-  - BeautifulSoup4
-  - PyQt6-WebEngine
+  - pillow
+  - requests
+  - pyinstaller
 
-## Instalação
+## Instalação e Uso via Terminal
 
 1. Clone o repositório ou baixe os arquivos do projeto.
 
 2. Instale as dependências:
 
 ```bash
-pip install pyqt6 pyqt6-webengine requests qrcode feedparser beautifulsoup4
+pip install pyqt6 pyqt6-webengine beautifulsoup4 qrcode feedparser pillow requests pyinstaller
 ```
 
 3. Execute a aplicação:
 
 ```bash
-python painel_interativo.py
+python painel.py
 ```
+
+## Gerar Executável (.EXE)
+
+1. Faça as alterações que deseja no arquivo `painel.py` e se certifique que tem todas as dependencias instaladas.
+
+2. Execute o comando:
+
+```bash
+pyinstaller --name "Painel_FCT" --onefile --windowed painel.py
+```
+
+3. Execute a aplicação.
+
 
 ## Configuração
 
