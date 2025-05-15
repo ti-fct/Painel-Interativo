@@ -8,7 +8,9 @@ import sys
 import requests
 import qrcode
 import feedparser
-import time
+import time  
+import os
+os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --disable-gpu-compositing"
 
 from io import BytesIO
 from bs4 import BeautifulSoup
@@ -21,7 +23,7 @@ from PyQt6.QtWebEngineCore import QWebEngineSettings
 
 # Configurações da aplicação
 MENU_INICIAL_VISIVEL = True
-ANIMACAO_BOLINHA_ATIVA = False 
+ANIMACAO_BOLINHA_ATIVA = False
 URL_FEED = "https://fct.ufg.br/feed"
 LIMITE_TITULO = 90
 LIMITE_DESCRICAO = 400
