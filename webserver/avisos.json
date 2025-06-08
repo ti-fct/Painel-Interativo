@@ -1,0 +1,26 @@
+[
+    {
+      "titulo": "🥪 Cardápio do Dia - Restaurante Universitário",
+      "descricao": "Hoje teremos: Arroz, feijão, bife acebolado, purê de batata e salada de alface com tomate. Opção vegetariana: Torta de legumes.",
+      "data_inicio": "2025-05-21 08:00",
+      "data_fim": "2025-05-21 14:00",
+      "url_imagem": "https://http2.mlstatic.com/D_NQ_NP_661921-MLB77494866502_072024-O.webp",
+      "link": ""
+    },
+    {
+      "titulo": "⚠️ AVISO: Manutenção no Bloco B",
+      "descricao": "Informamos que o Bloco B estará com o abastecimento de água interrompido hoje, das 14h às 16h, para manutenção emergencial.",
+      "data_inicio": "2025-05-21 09:00",
+      "data_fim": "2025-06-21 16:30",
+      "url_imagem": "https://http2.mlstatic.com/D_NQ_NP_661921-MLB77494866502_072024-O.webp",
+      "link": ""
+    },
+    {
+      "titulo": "🎉 Evento: Semana de Tecnologia",
+      "descricao": "Não perca a palestra de abertura da Semana de Tecnologia amanhã, às 19h no auditório principal. Acesse o QR Code para a programação completa.",
+      "data_inicio": "2025-05-21 12:00",
+      "data_fim": "2025-06-27 22:00",
+      "url_imagem": "https://http2.mlstatic.com/D_NQ_NP_661921-MLB77494866502_072024-O.webp",
+      "link": "https://fct.ufg.br/p/semana-de-tecnologia"
+    }
+  ]
