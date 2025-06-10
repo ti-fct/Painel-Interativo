@@ -1,6 +1,6 @@
 # -------------------------------------------------------------
 # PAINEL INTERATIVO FCT
-# VERSÃO: 5.0 - Atualizado com Avisos Personalizados e Melhorias
+# VERSÃO: 5.1 - Ajustes de parâmetros
 # -------------------------------------------------------------
 
 import sys
@@ -15,7 +15,7 @@ from datetime import datetime
 from io import BytesIO
 from bs4 import BeautifulSoup
 
-# Configurações para QtWebEngine (mantido)
+# Configurações para QtWebEngine para evitar travamentos e artefatos no Windows.
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --disable-gpu-compositing"
 
 from PyQt6.QtCore import (QUrl, QTimer, Qt, QThread, pyqtSignal, QEvent, QRectF)
@@ -30,12 +30,14 @@ from typing import List, Dict, Any
 MENU_INICIAL_VISIVEL = True
 ANIMACAO_BOLINHA_ATIVA = False
 URL_FEED = "https://fct.ufg.br/feed"
-ARQUIVO_AVISOS = "avisos.json"  # Nome do arquivo de avisos
+URL_AVISOS_API = "http://localhost:3000/api/avisos"
 LIMITE_TITULO = 90
 LIMITE_DESCRICAO = 400
-INTERVALO_ATUALIZACAO_CONTEUDO = 3600  # 1 hora em segundos
+INTERVALO_ATUALIZACAO_CONTEUDO = 1800  # BUSCA NOVIDADES NO FEED E NA API DE AVISOS (em segundos)
 LARGURA_IMAGEM = 500
 ALTURA_IMAGEM = 600
+QUANTIDADE_NOTICIAS_FEED = 5
+INTERVALO_AVANCO_CARROSSEL_MS = 10000 # Defina o tempo em milissegundos para o carrossel avançar para o próximo item. Ex: 10000 = 10 segundos, 15000 = 15 segundos
 
 # -------------------------------------------------------------
 # COMPONENTE DE GERENCIAMENTO DE CONTEÚDO (NOTÍCIAS E AVISOS)
@@ -43,16 +45,18 @@ ALTURA_IMAGEM = 600
 class GerenciadorConteudo(QThread):
     """
     Thread responsável por baixar notícias do feed RSS e carregar
-    avisos de um arquivo JSON local, misturando-os para exibição.
+    avisos de uma API local, misturando-os para exibição.
     """
     conteudo_pronto = pyqtSignal(list)
 
     def _carregar_avisos_ativos(self) -> List[Dict[str, Any]]:
-        """Lê o arquivo JSON, filtra e retorna os avisos ativos."""
+        """Lê os dados da API local, filtra e retorna os avisos ativos."""
         avisos_ativos = []
         try:
-            with open(ARQUIVO_AVISOS, 'r', encoding='utf-8') as f:
-                avisos = json.load(f)
+            # Faz a requisição para a API local
+            response = requests.get(URL_AVISOS_API, timeout=5) # Timeout de 5 segundos
+            response.raise_for_status()  # Lança um erro para status HTTP 4xx/5xx
+            avisos = response.json()
             
             agora = datetime.now()
             
@@ -61,9 +65,7 @@ class GerenciadorConteudo(QThread):
                     data_inicio = datetime.strptime(aviso['data_inicio'], '%Y-%m-%d %H:%M')
                     data_fim = datetime.strptime(aviso['data_fim'], '%Y-%m-%d %H:%M')
                     
-                    # Verifica se o aviso está no período de validade
                     if data_inicio <= agora <= data_fim:
-                        # Formata a data de exibição para algo amigável
                         data_exibicao = f"Aviso válido até {data_fim.strftime('%d/%m/%Y às %H:%M')}"
                         
                         aviso_processado = {
@@ -72,17 +74,17 @@ class GerenciadorConteudo(QThread):
                             'link': aviso.get('link', ''),
                             'url_imagem': aviso.get('url_imagem'),
                             'data': data_exibicao,
-                            'tipo': 'aviso' # Identificador interno
+                            'tipo': 'aviso'
                         }
                         avisos_ativos.append(aviso_processado)
 
                 except (ValueError, KeyError) as e:
-                    print(f"Aviso ignorado por erro de formato/chave: {aviso.get('titulo', 'Sem Título')}. Erro: {e}")
+                    print(f"Aviso da API ignorado por erro de formato/chave: {aviso.get('titulo', 'Sem Título')}. Erro: {e}")
 
-        except FileNotFoundError:
-            print(f"Arquivo '{ARQUIVO_AVISOS}' não encontrado. Nenhum aviso será carregado.")
+        except requests.exceptions.RequestException as e:
+            print(f"Erro ao conectar com a API de avisos em '{URL_AVISOS_API}'. Verifique se o servidor está rodando. Erro: {e}")
         except json.JSONDecodeError:
-            print(f"Erro ao decodificar o arquivo JSON '{ARQUIVO_AVISOS}'. Verifique a formatação.")
+            print(f"Erro ao decodificar a resposta JSON da API. Verifique o formato do 'avisos.json' no servidor.")
         
         return avisos_ativos
 
@@ -91,9 +93,10 @@ class GerenciadorConteudo(QThread):
         entradas_processadas = []
         try:
             feed = feedparser.parse(URL_FEED)
-            # Pega apenas as 6 primeiras entradas
-            for entrada in feed.entries[:6]:
-                # Extrair imagem da descrição
+            
+            # <<< ALTERAÇÃO 1: Uso do novo parâmetro >>>
+            # Antes: for entrada in feed.entries[:5]:
+            for entrada in feed.entries[:QUANTIDADE_NOTICIAS_FEED]:
                 url_imagem = None
                 sopa = BeautifulSoup(entrada.get('description', ''), 'html.parser')
                 tag_img = sopa.find('img')
@@ -102,24 +105,20 @@ class GerenciadorConteudo(QThread):
                     if url_imagem.startswith(("http://fct.ufg.brhttps:", "https://fct.ufg.brhttps:")):
                         url_imagem = url_imagem.replace("http://fct.ufg.br", "").replace("https://fct.ufg.br", "")
                 
-                # Limpar texto da descrição
                 sopa = BeautifulSoup(entrada.get('description', ''), 'html.parser')
                 for script in sopa(["script", "style"]):
                     script.decompose()
                 descricao = sopa.get_text(separator=' ', strip=True)
                 descricao = ' '.join(descricao.split())
                 
-                # Truncar textos
                 titulo = entrada.get('title', '')[:LIMITE_TITULO]
                 
                 if len(descricao) > LIMITE_DESCRICAO:
                     ultimo_espaco = descricao.rfind(' ', 0, LIMITE_DESCRICAO)
                     descricao = descricao[:ultimo_espaco] + '...' if ultimo_espaco > 0 else descricao[:LIMITE_DESCRICAO] + '...'
                 
-                # Capturar e formatar data da notícia
-                data_str = entrada.get('published', 'Data não disponível')
                 try:
-                    data_parsed = time.strptime(data_str, "%a, %d %b %Y %H:%M:%S %z")
+                    data_parsed = time.strptime(entrada.get('published', ''), "%a, %d %b %Y %H:%M:%S %z")
                     data_formatada = time.strftime("%d/%m/%Y - %H:%M", data_parsed)
                 except (ValueError, TypeError):
                     data_formatada = "Data não disponível"
@@ -130,7 +129,7 @@ class GerenciadorConteudo(QThread):
                     'link': entrada.get('link', ''),
                     'url_imagem': url_imagem,
                     'data': data_formatada,
-                    'tipo': 'noticia' # Identificador interno
+                    'tipo': 'noticia'
                 }
                 entradas_processadas.append(entrada_processada)
         except Exception as e:
@@ -138,10 +137,14 @@ class GerenciadorConteudo(QThread):
         return entradas_processadas
 
     def run(self):
-        """Método principal da thread: carrega avisos e notícias, mistura e emite."""
+        """Método principal: carrega avisos e notícias, junta e emite."""
+        print("Buscando avisos da API local...")
         avisos = self._carregar_avisos_ativos()
+        
+        print("Buscando notícias do feed RSS...")
         noticias = self._carregar_noticias_feed()
         
+        # Junta as listas, colocando os AVISOS PRIMEIRO.
         conteudo_final = avisos + noticias
         
         if not conteudo_final:
@@ -149,13 +152,11 @@ class GerenciadorConteudo(QThread):
             self.conteudo_pronto.emit([])
             return
 
-        # Mistura os itens para uma exibição mais dinâmica
-        random.shuffle(conteudo_final)
-        
+        print(f"Conteúdo carregado: {len(avisos)} aviso(s) e {len(noticias)} notícia(s).")
         self.conteudo_pronto.emit(conteudo_final)
 
 # -------------------------------------------------------------
-# HELPER PARA CRIAR QR CODE (sem alterações)
+# HELPER PARA CRIAR QR CODE
 # -------------------------------------------------------------
 def criar_qr_code(url, tamanho=150):
     try:
@@ -244,7 +245,9 @@ class CarrosselConteudo(QWidget):
         if itens:
             self.indice_atual = 0
             self.atualizar_exibicao()
-            self.timer_carrossel.start(10000)  # Avança para próximo item a cada 10 segundos
+            # <<< ALTERAÇÃO 2: Uso do novo parâmetro >>>
+            # Antes: self.timer_carrossel.start(10000)
+            self.timer_carrossel.start(INTERVALO_AVANCO_CARROSSEL_MS) 
         else:
             self.rotulo_titulo.setText("Não foi possível carregar conteúdo.")
             self.rotulo_descricao.setText("Verifique a conexão com a internet e o arquivo de avisos.")
@@ -319,7 +322,7 @@ class CarrosselConteudo(QWidget):
         self.gerenciador_conteudo.start()
 
 # -------------------------------------------------------------
-# WIDGET PARA A ANIMAÇÃO DA BOLINHA (sem alterações)
+# WIDGET PARA A ANIMAÇÃO DA BOLINHA
 # -------------------------------------------------------------
 class BallAnimation(QWidget):
     def __init__(self, parent):
@@ -364,7 +367,7 @@ class BallAnimation(QWidget):
         painter.drawText(rect_texto_f, "Olá! Utilize o mouse para interagir com o painel!", opcao_texto)
 
 # -------------------------------------------------------------
-# WIDGET PARA O MENU LATERAL (sem alterações)
+# WIDGET PARA O MENU LATERAL
 # -------------------------------------------------------------
 class MenuLateral(QWidget):
     def __init__(self, parent=None):
@@ -397,7 +400,7 @@ class MenuLateral(QWidget):
         layout.addStretch()
 
 # -------------------------------------------------------------
-# JANELA PRINCIPAL (com pequenas adaptações)
+# JANELA PRINCIPAL
 # -------------------------------------------------------------
 class AplicacaoTelaCheia(QMainWindow):
     def __init__(self):
