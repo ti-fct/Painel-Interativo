@@ -1,117 +1,105 @@
 # Painel Interativo FCT/UFG
 
-[![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)](https://www.python.org/)
-[![PyQt6](https://img.shields.io/badge/PyQt-6.0+-green.svg)](https://www.riverbankcomputing.com/software/pyqt/)
-[![Versão](https://img.shields.io/badge/Versão-4.1-orange.svg)]()
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![PyQt6](https://img.shields.io/badge/PyQt-6-green.svg)](https://www.riverbankcomputing.com/software/pyqt/)
+[![Versão](https://img.shields.io/badge/Versão-5.0-orange.svg)]()
 
-Um painel interativo desenvolvido para a Faculdade de Ciência e Tecnologia (FCT) da Universidade Federal de Goiás (UFG), exibindo notícias, informações do campus, horários e outros recursos relevantes.
+Um painel interativo responsivo desenvolvido para a Faculdade de Ciência e Tecnologia (FCT) da Universidade Federal de Goiás (UFG). Exibe notícias e avisos em tempo real, informações do campus, horários, agenda e outros recursos relevantes.
 
 ## Funcionalidades
 
-- **Feed de Notícias Automático**: Exibe as últimas notícias da FCT/UFG com rotação automática.
+- **Conteúdo Dinâmico**: Exibe avisos via API e as últimas notícias via Feed RSS, em ordem cronológica.
+- **Layout Responsivo**: A interface se adapta a diferentes resoluções e proporções de tela.
 - **Menu Interativo**: Navegação intuitiva por diferentes seções de conteúdo.
-- **Integração Web**: Carrega páginas web externas para informações específicas.
-- **Códigos QR**: Gera códigos QR para cada notícia, permitindo acesso rápido em dispositivos móveis.
-- **Modo Automático**: Retorna à tela inicial após período de inatividade.
-- **Animação Interativa**: Inclui uma animação visual para atrair a atenção do usuário (opcional).
+- **Integração Web**: Carrega páginas web externas para informações como agenda, horários e mapas.
+- **Modo Quiosque Automático**: Após 2 minutos de inatividade, o painel retorna à tela inicial e exibe o menu, garantindo que esteja sempre pronto para o próximo usuário.
+- **Animação de Interatividade**: Quando inativo, uma animação visual com texto convida o usuário a interagir com o painel.
+- **Códigos QR**: Gera códigos QR para cada notícia, permitindo acesso rápido ao conteúdo completo em dispositivos móveis.
 
 ## Requisitos
 
-- Python 3.6+
-- PyQt6
-- QtWebEngine
-- Bibliotecas Python:
-  - pyqt6
-  - pyqt6-webengine
-  - beautifulsoup4
-  - qrcode
-  - feedparser
-  - pillow
-  - requests
-  - pyinstaller
+- Python 3.8+
+- Bibliotecas listadas no arquivo `requirements.txt`.
 
-## Instalação e Uso via Terminal
+## Instalação e Uso
 
-1. Clone o repositório ou baixe os arquivos do projeto.
+1.  Clone o repositório ou baixe os arquivos do projeto.
 
-2. Instale as dependências:
+2.  Crie e ative um ambiente virtual (recomendado):
+    ```bash
+    python -m venv venv
+    # No Windows
+    .\venv\Scripts\Activate.ps1
+    # No Linux/macOS
+    source venv/bin/activate
+    ```
 
-```bash
-pip install pyqt6 pyqt6-webengine beautifulsoup4 qrcode feedparser pillow requests pyinstaller
-```
+3.  Instale as dependências usando o arquivo `requirements.txt`:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-3. Execute a aplicação:
-
-```bash
-python painel.py
-```
+4.  Execute a aplicação:
+    ```bash
+    python main.py
+    ```
 
 ## Gerar Executável (.EXE)
 
-1. Faça as alterações que deseja no arquivo `painel.py` e se certifique que tem todas as dependencias instaladas.
+Para empacotar a aplicação em um único arquivo `.exe` para distribuição em Windows, use o **PyInstaller**. A inclusão do `PyQtWebEngine` requer passos adicionais.
 
-2. Execute o comando:
+1.  Certifique-se de que o PyInstaller está instalado (`pip install pyinstaller`).
 
-```bash
-pyinstaller --name "Painel_FCT" --onefile --windowed painel.py
-```
+2.  **Execute o comando abaixo no terminal**, com seu ambiente virtual ativado.
 
-3. Execute a aplicação.
+    **IMPORTANTE**: Substitua `C:/Caminho/Completo/Para/O/Projeto/venv` pelo caminho absoluto do seu ambiente virtual.
 
+    ```bash
+    pyinstaller --name "Painel-Interativo-FCT" --onefile --windowed --icon="caminho/para/seu_icone.ico" --add-data "C:/Caminho/Completo/Para/O/Projeto/venv/Lib/site-packages/PyQt6/Qt6/resources;PyQt6/Qt6/resources" --add-data "C:/Caminho/Completo/Para/O/Projeto/venv/Lib/site-packages/PyQt6/Qt6/translations;PyQt6/Qt6/translations" --hidden-import "PyQt6.QtWebEngineCore" main.py
+    ```
+
+3.  O arquivo `Painel-Interativo-FCT.exe` estará na pasta `dist/`.
+
+**Por que o comando é complexo?** O `PyQtWebEngine` depende de muitos arquivos de recursos externos (dicionários, codecs, etc.). As flags `--add-data` copiam esses arquivos essenciais para dentro do `.exe`, e a flag `--hidden-import` garante que o módulo principal do WebEngine seja incluído.
 
 ## Configuração
 
-As principais configurações podem ser ajustadas editando as variáveis no início do arquivo:
+Todas as principais configurações podem ser ajustadas no arquivo **`config.py`**:
 
 ```python
-# Configurações da aplicação
-MENU_INICIAL_VISIVEL = True     # Define se o menu lateral aparece aberto inicialmente
-ANIMACAO_BOLINHA_ATIVA = False  # Ativa/desativa a animação da bolinha flutuante
-URL_FEED = "https://fct.ufg.br/feed"  # URL do feed RSS de notícias
-LIMITE_TITULO = 90              # Limite de caracteres para títulos
-LIMITE_DESCRICAO = 400          # Limite de caracteres para descrições
-INTERVALO_ATUALIZACAO = 3600    # Intervalo de atualização de notícias (em segundos)
-LARGURA_IMAGEM = 500            # Largura máxima das imagens
-ALTURA_IMAGEM = 600             # Altura máxima das imagens
-```
+# config.py
 
-Para usar como painel interativo em modo quiosque, configure `MENU_INICIAL_VISIVEL = False`.
+# Ativa/desativa a animação da bolinha flutuante
+ANIMACAO_BOLINHA_ATIVA = True
+# Controla se a aplicação inicia em tela cheia
+MODO_TELA_CHEIA = True
+
+# URL do feed RSS de notícias e da API de avisos
+URL_FEED = "https://fct.ufg.br/feed"
+URL_AVISOS = "http://192.168.0.7:3000/api/avisos"
+
+# Intervalos de atualização (em segundos) e tempo de exibição do carrossel
+INTERVALO_ATUALIZACAO_AVISOS = 600
+INTERVALO_CARROSSEL = 15
+
+# URLs para os botões do menu
+URLS = {
+    "campus": "https://...",
+    "agenda": "https://...",
+    # ...
+}
+```
 
 ## Estrutura do Projeto
 
-O projeto é organizado em componentes principais:
+O projeto é modularizado para facilitar a manutenção:
 
-- **BaixadorNoticias**: Thread para download e processamento de notícias do feed RSS.
-- **CarrosselNoticias**: Widget para exibição rotativa das notícias com imagens e QR codes.
-- **BallAnimation**: Animação interativa flutuante com mensagem ao usuário.
-- **MenuLateral**: Menu de navegação com opções para diferentes seções.
-- **AplicacaoTelaCheia**: Janela principal integrando todos os componentes.
-
-## Seções Disponíveis
-
-- **Página Inicial**: Feed de notícias da FCT/UFG
-- **Conheça o Campus**: Apresentação sobre o campus
-- **Linha de Ônibus**: Informações sobre transporte público
-- **Horário de Aulas**: Sistema de consulta aos horários das disciplinas
-- **Mapa de Salas**: Visualização das instalações e localização de salas
-- **Equipe FCT/UFG**: Informações sobre servidores e colaboradores
-- **Ações de Extensão**: Projetos e ações de extensão da faculdade
-
-## Personalização
-
-Para personalizar a aplicação:
-
-- Modifique o estilo CSS interno para alterar a aparência
-- Adicione novas seções ao menu editando o dicionário `botoes` na classe `MenuLateral`
-- Configure URLs diferentes para as seções na função `__init__` da classe `AplicacaoTelaCheia`
-
-## Modo Quiosque
-
-Para usar em modo quiosque (tela cheia sem interrupções):
-
-1. Configure `MENU_INICIAL_VISIVEL = False`
-2. Execute em um ambiente onde o sistema operacional inicie a aplicação automaticamente
-3. Opcionalmente, ative `ANIMACAO_BOLINHA_ATIVA = True` para indicar interatividade
+- **main.py:** Ponto de entrada da aplicação, cria a janela principal, gerencia os timers e a lógica da animação de inatividade.
+- **config.py:** Arquivo centralizado para todas as variáveis de configuração (URLs, timers, etc).
+- **ui_components.py:** Contém as classes dos principais widgets da interface, como CarrosselNoticias e MenuLateral.
+- **workers.py:** Contém as classes QThread (BaixadorNoticias, BaixadorAvisos) que buscam dados da web em segundo plano para não travar a interface.
+- **utils.py:** Funções auxiliares, como a geração de QR Codes.
+- **requirements.txt:** Lista de todas as dependências do projeto.
 
 ## Contribuição
 
