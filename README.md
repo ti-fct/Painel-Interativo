@@ -55,6 +55,12 @@ Para empacotar a aplicação em um único arquivo `.exe` para distribuição em 
     **IMPORTANTE**: Substitua `C:/Caminho/Completo/Para/O/Projeto/venv` pelo caminho absoluto do seu ambiente virtual.
 
     ```bash
+    pyinstaller --name "Painel-Interativo-FCT" --noconsole --icon="caminho/para/seu_icone.ico" --add-data "C:/Caminho/Completo/Para/O/Projeto/venv/Lib/site-packages/PyQt6/Qt6/resources;PyQt6/Qt6/resources" --add-data "C:/Caminho/Completo/Para/O/Projeto/venv/Lib/site-packages/PyQt6/Qt6/translations;PyQt6/Qt6/translations" --hidden-import "PyQt6.QtWebEngineCore" main.py
+    ```
+    
+    **IMPORTANTE**: A opção `--onefile` gera apenas um .exe o que o ideal, mas o Windows detecta como vírus, por isso é recomendado gerar a pasta e compactar, ou gerar o .exe adicionar o arquivo as exceções do Windows.
+
+    ```bash
     pyinstaller --name "Painel-Interativo-FCT" --onefile --windowed --icon="caminho/para/seu_icone.ico" --add-data "C:/Caminho/Completo/Para/O/Projeto/venv/Lib/site-packages/PyQt6/Qt6/resources;PyQt6/Qt6/resources" --add-data "C:/Caminho/Completo/Para/O/Projeto/venv/Lib/site-packages/PyQt6/Qt6/translations;PyQt6/Qt6/translations" --hidden-import "PyQt6.QtWebEngineCore" main.py
     ```
 

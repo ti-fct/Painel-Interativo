@@ -7,7 +7,7 @@ MODO_TELA_CHEIA = True
 # --- Configurações do Feed de Notícias ---
 URL_FEED = "https://fct.ufg.br/feed"
 LIMITE_TITULO = 80
-LIMITE_DESCRICAO = 400
+LIMITE_DESCRICAO = 300
 INTERVALO_ATUALIZACAO_NOTICIAS = 1800  # meia hora em segundos
 INTERVALO_CARROSSEL = 12  # Tempo em segundos para cada item
 
