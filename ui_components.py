@@ -107,7 +107,8 @@ class CarrosselNoticias(QWidget):
             
             if not self.conteudo_combinado:
                 self.display_stack.setCurrentWidget(self.widget_noticia)
-                self.rotulo_titulo.setText("Sem conteúdo para exibir"); self.rotulo_descricao.setText("Não foram encontradas notícias ou avisos válidos no momento."); self.rotulo_imagem_noticia.setText("")
+                self.rotulo_titulo.setText("Sem conteúdo para exibir")
+                self.rotulo_descricao.setText("Verifique a conexão de rede ou o endereço do Feed.")
                 return
                 
             self.indice_atual = -1
@@ -170,7 +171,7 @@ class MenuLateral(QWidget):
         botoes_info = [
             ("inicio", "🏠  Página Inicial"), ("campus", "🏛️  Conheça o Campus"), ("onibus", "🚌  Linha de Ônibus"),
             ("horarios", "⏰  Horário de Aulas"), ("agenda", "📅  Agenda FCT"), ("mapa", "🗺️  Mapa de Salas"),
-            ("quiz", "🧠  Quiz FCT (Em breve)"), ("pessoas", "👥  Equipe FCT/UFG"), ("extensao", "🌱  Ações de Extensão")
+            ("pessoas", "👥  Equipe FCT/UFG"), ("extensao", "🌱  Ações de Extensão")
         ]
         self.botoes = {}
         for chave, texto in botoes_info:

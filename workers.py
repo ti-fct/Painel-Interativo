@@ -14,31 +14,60 @@ class BaixadorNoticias(QThread):
     noticias_prontas = pyqtSignal(list)
     def run(self):
         try:
-            feed = feedparser.parse(URL_FEED)
+            sessao = requests.Session()
+            resposta = sessao.get(URL_FEED, timeout=15, verify=False) 
+            resposta.raise_for_status()
+            
+            feed = feedparser.parse(resposta.text) # Analisa o texto baixado
+            
             entradas_processadas = []
+            if not feed.entries:
+                print("Aviso: O feed foi lido, mas não contém entradas.")
+                
             for entrada in feed.entries[:6]:
                 sopa = BeautifulSoup(entrada.get('description', ''), 'html.parser')
+
                 tag_img = sopa.find('img')
                 url_imagem = tag_img['src'] if tag_img and tag_img.get('src') else None
-                if url_imagem and url_imagem.startswith(("http://fct.ufg.brhttps:", "https://fct.ufg.brhttps:")):
-                    url_imagem = url_imagem.replace("https://fct.ufg.br", "").replace("http://fct.ufg.br", "")
+
+                if url_imagem:
+                    if "http://fct.ufg.brhttps" in url_imagem:
+                        url_imagem = url_imagem.replace("http://fct.ufg.brhttps", "https")
+                    elif url_imagem.startswith("/"):
+                        url_imagem = "https://fct.ufg.br" + url_imagem
+
                 [s.decompose() for s in sopa(["script", "style"])]
                 descricao = ' '.join(sopa.get_text(separator=' ', strip=True).split())
+                
                 titulo = entrada.get('title', 'Sem Título')
-                if len(titulo) > LIMITE_TITULO: titulo = titulo[:LIMITE_TITULO].rsplit(' ', 1)[0] + '...'
-                if len(descricao) > LIMITE_DESCRICAO: descricao = descricao[:LIMITE_DESCRICAO].rsplit(' ', 1)[0] + '... - '
-                data_str = entrada.get('published', 'Data não disponível')
-                try:
-                    data_obj = time.strptime(data_str, "%a, %d %b %Y %H:%M:%S %z")
-                    data_formatada = time.strftime("%d/%m/%Y às %H:%M", data_obj)
-                except (ValueError, TypeError): data_formatada = 'Data Indisponível'
+                if len(titulo) > LIMITE_TITULO: 
+                    titulo = titulo[:LIMITE_TITULO].rsplit(' ', 1)[0] + '...'
+                
+                if len(descricao) > LIMITE_DESCRICAO: 
+                    descricao = descricao[:LIMITE_DESCRICAO].rsplit(' ', 1)[0] + '...'
+
+                data_str = entrada.get('published', '')
+                data_formatada = 'Data Indisponível'
+                if data_str:
+                    try:
+                        data_obj = entrada.published_parsed
+                        data_formatada = time.strftime("%d/%m/%Y às %H:%M", data_obj)
+                    except:
+                        pass
+
                 entradas_processadas.append({
-                    'type': 'noticia', 'titulo': titulo, 'descricao': descricao, 'link': entrada.get('link', ''),
-                    'url_imagem': url_imagem, 'data': data_formatada
+                    'type': 'noticia', 
+                    'titulo': titulo, 
+                    'descricao': descricao, 
+                    'link': entrada.get('link', ''),
+                    'url_imagem': url_imagem, 
+                    'data': data_formatada
                 })
+
             self.noticias_prontas.emit(entradas_processadas)
         except Exception as e:
-            print(f"Erro ao obter notícias: {e}"); self.noticias_prontas.emit([])
+            print(f"Erro crítico ao obter notícias: {e}")
+            self.noticias_prontas.emit([])
 
 class BaixadorAvisos(QThread):
     avisos_prontos = pyqtSignal(list)

@@ -76,9 +76,7 @@ class BaixadorNoticias(QThread):
                     else:
                         descricao = descricao[:LIMITE_DESCRICAO] + '... - '
                 
-                # Capturar data da notícia (se disponível)
                 data = entrada.get('published', 'Data não disponível')
-                # Opcional: formatar a data se necessário, por exemplo:
                 try:
                     data_parsed = time.strptime(data, "%a, %d %b %Y %H:%M:%S %z")
                     data = time.strftime("%d/%m/%Y - %H:%M", data_parsed)
